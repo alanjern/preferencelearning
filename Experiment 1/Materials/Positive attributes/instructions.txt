@@ -1,0 +1,11 @@
+Preference learning card sorting cover story: Candies
+
+Each of the cards in front of you shows a choice someone made between different bags of candy. Each column represents the contents of a bag of candy, and the chosen bag is always on the right, marked by this black rectangle. The colored boxes each represent one piece of candy. For example, this card shows a case where ... Boxes that are the same color represent candies of the same type. For example, this card shows a case where all of the bags contain an X candy. Finally, note that people were required to choose among the bags available, and were not allowed to reject all the bags. For example, this card shows a case where the person had no choice since there was only one bag, so the person received all of these candies.
+
+Your task is to sort these choices by how strongly they suggest that the person making the choice likes X candies. Please sort the cards from weakest evidence to strongest.
+
+Feel free to spread the cards out however you like as you sort them. When you are finished, please turn the cards over and write the numbers printed on the backs of each card on this page in the order you sorted them in. If there are some cards that you think provide equal evidence, you can write their numbers on the same row. But even if you think there is only a small difference between two cards, please sort the cards into separate rows. The numbers were printed on the cards randomly, so they do not indicate anything about how the cards should be sorted. Please double-check the numbers you wrote down to make sure you didn't skip a card or accidentally write down the wrong number.
+
+Finally, please answer the questions on the back of the page that ask you to explain briefly how you made some of your judgments.
+
+This experiment has been taking people about 30-35 minutes to complete, so there is plenty of time to work carefully.
