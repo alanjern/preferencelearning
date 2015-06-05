@@ -1,6 +1,5 @@
-Code, data, and materials for preference learning paper
-=======================================================
+Preference learning paper (title TBD)
+=====================================
 
-This repository contains code for generating model predictions, experimental data, and experimental materials.
+This repository will eventually contain experimental materials, data, and code for generating model predictions.
 
-TODO
