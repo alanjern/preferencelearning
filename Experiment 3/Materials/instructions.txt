@@ -1,0 +1,74 @@
+Page 1 (Instructions)
+=====================
+
+In this HIT, you will see some choices made by other people. Each person was given a choice between different bags of candy and they were allowed to take only one bag. For example, here's a choice made by Bob between five bags that contained two candies each:
+
+[example1.gif]
+
+Each bag is shown as a stack of candies. The different colors represent different types of candy. The frame around Bag 5 means that Bob took this bag.
+
+You will now see 12 sets of choices and you will make one judgment about each set.
+
+--------------------------------------------
+
+Example trial text 1
+====================
+
+Please read the following information carefully and then answer the question below.
+
+[On left side of screen] 
+
+Josh made the following choice between different bags of candy.
+
+[a|x.gif]
+
+Josh took Bag 2.
+
+[On right side of screen]
+
+Mary made the following choice between different bags of candy.
+
+[a|a|a|x.gif]
+
+Mary took Bag 3.
+
+[Bottom of screen]
+
+Based only on the above information, which person do you think likes red candy more?
+
+Josh likes red candy more [x  x  x  x  x  x  x] Mary likes red candy more
+
+--------------------------------------------
+
+Example trial text 2
+====================
+
+Please read the following information carefully and then answer the question below.
+
+[On left side of screen] 
+
+Nora made the following choice between different bags of candy.
+
+[d|c|b|a|x.gif]
+
+Nora took Bag 5.
+
+[On right side of screen]
+
+On two different days, Pete made the following choices between different bags of candy.
+
+Day 1
+
+[b|a|x.gif]
+
+Day 2
+
+[d|c|x.gif]
+
+Each time, Pete took Bag 3.
+
+[Bottom of screen]
+
+Based only on the above information, which person do you think likes red candy more?
+
+Nora likes red candy more [x  x  x  x  x  x  x] Pete likes red candy more
