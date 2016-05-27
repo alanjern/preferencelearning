@@ -1,5 +1,4 @@
-Preference learning paper (title TBD)
-=====================================
+This repository contains code, data, and experimental materials for:
 
-This repository will eventually contain experimental materials, data, and code for generating model predictions.
+Jern, A., Lucas, C. G., & Kemp, C. (under review). People learn other people's preferences through inverse decision-making.
 
