@@ -8,7 +8,8 @@ The most useful files here are in "Summary data". There are three files for each
 
 This is the data that was used to produce Figure 1 in the paper.
 
-==== Complete information ====
+Complete information
+====================
 
 Raw data: Contains transcribed responses from subjects in both conditions. Each file (`results_subject*.txt`) contains a list of numbers, each number corresponding to one of the choices. The numbers appear from weakest to strongest evidence. Choices that were assigned equal rankings are separated by commas. Choices that were assigned different rankings are on different lines.
 
