@@ -31,8 +31,7 @@ nNeg = size(dataNeg,1);
 modelNeg = load('../Model/negative_choicesort_20mil');
 
 
-% X{i} = a [option-by-effect] matrix where each row represents x_i
-% Effects: [d c b a x]
+% X(i,:) = a feature vector for choice i using the predictors/features above
 
 X(1,:) = [1 1 0 1 1 1 0 0 1 1];
 labels{1} = 'a/x';
@@ -143,7 +142,7 @@ fprintf('=== Positive effects ===\n');
 for i=1:nPos
     fprintf('Subject %d\n',i);
     d = dataPos(i,:);
-    % Compute Spearman rho for logit model and subject i
+    % Compute Spearman rho for absolute utility model and subject i
     rho_thresh_pos(i) = corr(modelPos.rankingMeans', d', 'type', 'Spearman');
     [f max_rho] = compute_minimal_regression_rho(d',X,rho_thresh_pos(i));
     if (max_rho < rho_thresh_pos(i))
@@ -168,7 +167,7 @@ fprintf('=== Negative effects ===\n');
 for i=1:nNeg
     fprintf('Subject %d\n',i);
     d = dataNeg(i,:);
-    % Compute Spearman rho for logit model and subject i
+    % Compute Spearman rho for absolute utility model and subject i
     rho_thresh_neg(i) = corr(modelNeg.rankingMeans', d', 'type', 'Spearman');
     [f max_rho] = compute_minimal_regression_rho(d',X,rho_thresh_neg(i));
     if (max_rho < rho_thresh_neg(i))
@@ -183,8 +182,8 @@ for i=1:nNeg
 end
 
 % Save the results
-save('weightedFeaturePos','rhos_pos','rho_thresh_pos','fails_pos','n_factors_needed_pos','fcounts_pos');
-save('weightedFeatureNeg','rhos_neg','rho_thresh_neg','fails_neg','n_factors_needed_neg','fcounts_neg');
+%save('weightedFeaturePos','rhos_pos','rho_thresh_pos','fails_pos','n_factors_needed_pos','fcounts_pos');
+%save('weightedFeatureNeg','rhos_neg','rho_thresh_neg','fails_neg','n_factors_needed_neg','fcounts_neg');
 
 
 

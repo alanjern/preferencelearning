@@ -17,17 +17,20 @@ nClusters = 4;
 
 % Load in the data and model predictions
 
-% Positive effects
+% Positive-attributes
 dataPos = importdata('../Data/Raw data/Positive-attributes/rawdata_fractional.csv');
 labelsPos = importdata('../Data/Summary data/Positive-attributes/labels_fractional.csv');
 modelPos = load('../Model/positive_choicesort_20mil');
 modelRepPos = load('../Model/positive_choicesort_representativeness_20mil');
+modelProbitPos = load('../Model/positive_choicesort_probit_200k');
+modelLinearPos = load('../Model/positive_choicesort_linear_20mil');
 
-% Negative effects
+% Negative-attributes
 dataNeg = importdata('../Data/Raw data/Negative-attributes/rawdata_fractional.csv');
 labelsNeg = importdata('../Data/Summary data/Positive-attributes/labels_fractional.csv');
 modelNeg = load('../Model/negative_choicesort_20mil');
 modelRepNeg = load('../Model/positive_choicesort_representativeness_20mil');
+modelProbitNeg = load('../Model/negative_choicesort_probit_200k');
 
 
 % Summarize the data
@@ -38,7 +41,7 @@ meansPos = mean(dataPos);
 stdsPos = std(dataPos);
 sesPos = stdsPos ./ sqrt(nPos);
 [sortedDataPos, sortingIndexDataPos] = sort(meansPos);
-[sortedStdsPos, sortingIndexStdsPos] = sort(stdsPos);
+sortedStdsPos = stdsPos(sortingIndexDataPos);
 
 % Negative effects
 nNeg = size(dataNeg,1);
@@ -46,7 +49,7 @@ meansNeg = mean(dataNeg);
 stdsNeg = std(dataNeg);
 sesNeg = stdsNeg ./ sqrt(nNeg);
 [sortedDataNeg, sortingIndexDataNeg] = sort(meansNeg);
-[sortedStdsNeg, sortingIndexStdsNeg] = sort(stdsNeg);
+sortedStdsNeg = stdsNeg(sortingIndexDataNeg);
 
 % Print the list of choices sorted by mean human ranking
 disp(labelsPos);
@@ -324,6 +327,41 @@ rhoSurpriseNegCI = [tanh(atanh(rhoSurpriseNeg) - z/sqrt(length(meansNeg)-3)) ...
 fprintf('Negative surprise model rho: %.3f [%.3f %.3f]\n', rhoSurpriseNeg, rhoSurpriseNegCI(1), rhoSurpriseNegCI(2));
 
 
+% ==============================================================================
+% Absolute utility model (probit model) vs. Human rankings (positive)
+% ==============================================================================
+
+% Compute Spearman rho
+rhoAbsPos = corr(modelProbitPos.rankingMeans_probit', meansPos', 'type', 'Spearman');
+% Compute confidence interval
+rhoAbsPosCI = [tanh(atanh(rhoAbsPos) - z/sqrt(length(meansPos)-3)) ...
+               tanh(atanh(rhoAbsPos) + z/sqrt(length(meansPos)-3))];
+fprintf('Positive probit model rho: %.3f [%.3f %.3f]\n', rhoAbsPos, rhoAbsPosCI(1), rhoAbsPosCI(2));
+
+% ==============================================================================
+% Absolute utility model (probit model) vs. Human rankings (negative)
+% ==============================================================================
+
+% Compute Spearman rho
+rhoAbsPos = corr(modelProbitNeg.rankingMeans_probit', meansNeg', 'type', 'Spearman');
+% Compute confidence interval
+rhoAbsPosCI = [tanh(atanh(rhoAbsPos) - z/sqrt(length(meansPos)-3)) ...
+               tanh(atanh(rhoAbsPos) + z/sqrt(length(meansPos)-3))];
+fprintf('Negative probit model rho: %.3f [%.3f %.3f]\n', rhoAbsPos, rhoAbsPosCI(1), rhoAbsPosCI(2));
+
+% ==============================================================================
+% Absolute utility model (linear model) vs. Human rankings (positive)
+% ==============================================================================
+
+% Compute Spearman rho
+rhoAbsPos = corr(modelLinearPos.rankingMeans_linear', meansPos', 'type', 'Spearman');
+% Compute confidence interval
+rhoAbsPosCI = [tanh(atanh(rhoAbsPos) - z/sqrt(length(meansPos)-3)) ...
+               tanh(atanh(rhoAbsPos) + z/sqrt(length(meansPos)-3))];
+fprintf('Positive linear model rho: %.3f [%.3f %.3f]\n', rhoAbsPos, rhoAbsPosCI(1), rhoAbsPosCI(2));
+
+
+
 % =============================================================================
 % Cluster analysis (negative)
 % =============================================================================
@@ -383,7 +421,7 @@ hold on;
 [nb,xb] = hist(weightedFeaturePos.n_factors_needed_pos,1:11);
 bh=bar(xb,nb);
 set(bh,'facecolor',[0.5 0.5 0.5]);
-set(bh,'edge','w');
+set(bh,'edgecolor','none');
 axis([0 12 0 25]);
 set(gca,'XTick',1:11);
 set(gca,'YTick',[5 10 15 20 25]);
@@ -392,7 +430,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-print('-depsc', 'weighted_feature_pos');
+%print('-depsc', 'weighted_feature_pos');
 
 weightedFeatureNeg = load('../Model/weightedFeatureNeg');
 
@@ -403,7 +441,7 @@ hold on;
 [nb,xb] = hist(weightedFeatureNeg.n_factors_needed_neg,1:11);
 bh=bar(xb,nb);
 set(bh,'facecolor',[0.5 0.5 0.5]);
-set(bh,'edge','w');
+set(bh,'edgecolor','none');
 axis([0 12 0 25]);
 set(gca,'XTick',1:11);
 set(gca,'YTick',[5 10 15 20 25]);
@@ -412,5 +450,82 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-print('-depsc', 'weighted_feature_neg');
+%print('-depsc', 'weighted_feature_neg');
+
+
+
+% =============================================================================
+% Model parameter sensitivity analysis
+% =============================================================================
+
+varyMeansPos = load('vary_prior_mean_results_500k_positive');
+varyMeansNeg = load('vary_prior_mean_results_500k_negative');
+varySDsPos = load('vary_prior_sd_results_500k_positive');
+varySDsNeg = load('vary_prior_sd_results_500k_negative');
+
+figure();
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperPosition', [0 0 2.5 2]);
+
+%m = {'+','o','*','.','x','s','d','^','v','>','<','p','h'};
+%set(gca(), 'LineStyleOrder',m,'ColorOrder',[0 0 0],'NextPlot','replacechildren')
+
+%plot(varyMeansPos.priormeans, [varyMeansPos.rhos_abs; varyMeansPos.rhos_rel; ...
+%                varyMeansPos.rhos_rep; varyMeansPos.rhos_surp], 'markersize', 4);
+plot(varyMeansPos.priormeans, [varyMeansPos.rhos_abs; varyMeansPos.rhos_rel; ...
+                varyMeansPos.rhos_rep; varyMeansPos.rhos_surp], '.', 'markersize', 8);
+axis([0 8.1 -1 1.1]);
+set(gca,'XTick',[4 8]);
+set(gca,'YTick',[0 1]);
+set(gca,'XTickLabel',{});
+set(gca,'YTickLabel',{});
+box off;
+
+%print('-depsc', 'param_sensitivity_mu_pos');
+
+figure();
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperPosition', [0 0 2.5 2]);
+
+plot(varyMeansNeg.priormeans, [varyMeansNeg.rhos_abs; varyMeansNeg.rhos_rel; ...
+                varyMeansNeg.rhos_rep; varyMeansNeg.rhos_surp], '.', 'markersize', 8);
+axis([0 8.1 -1 1.1]);
+set(gca,'XTick',[4 8]);
+set(gca,'YTick',[0 1]);
+set(gca,'XTickLabel',{});
+set(gca,'YTickLabel',{});
+box off;
+
+print('-depsc', 'param_sensitivity_mu_neg');
+
+figure();
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperPosition', [0 0 2.5 2]);
+
+plot(varySDsPos.priorsds, [varySDsPos.rhos_abs; varySDsPos.rhos_rel; ...
+                varySDsPos.rhos_rep; varySDsPos.rhos_surp], '.', 'markersize', 8);
+axis([0 4.1 -1 1.1]);
+set(gca,'XTick',[2 4]);
+set(gca,'YTick',[0 1]);
+set(gca,'XTickLabel',{});
+set(gca,'YTickLabel',{});
+box off;
+
+%print('-depsc', 'param_sensitivity_sigma_pos');
+
+figure();
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperPosition', [0 0 2.5 2]);
+
+plot(varySDsNeg.priorsds, [varySDsNeg.rhos_abs; varySDsNeg.rhos_rel; ...
+                varySDsNeg.rhos_rep; varySDsNeg.rhos_surp], '.', 'markersize', 8);
+axis([0 4.1 -1 1.1]);
+set(gca,'XTick',[2 4]);
+set(gca,'YTick',[0 1]);
+set(gca,'XTickLabel',{});
+set(gca,'YTickLabel',{});
+box off;
+
+%print('-depsc', 'param_sensitivity_sigma_neg');
+
 

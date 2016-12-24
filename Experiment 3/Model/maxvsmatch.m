@@ -1,6 +1,8 @@
 close all;
 clear all;
 
+pp = parpool;
+
 % We assume a gaussian prior on utilities such that ~98% of the mass lies above
 % 0, i.e. mean = 2 * std
 s_u = 2; 
@@ -202,3 +204,4 @@ fprintf('Correlation between absolute and relative utility model predictions (ma
 	
 %save('positive_maxvsmatch_20mil','predictions_absolute','predictions_absolute_max','predictions_relative');
 
+delete(pp);

@@ -49,7 +49,17 @@ fprintf('Condition 6: %.5f\n',p);
 [h p] = ttest(c(7,:), 0, 'tail', 'right');
 fprintf('Condition 7: %.5f\n',p);
 [h p] = ttest(c(8,:), 0, 'tail', 'right');
-fprintf('Condition 8: %.5f\n',p);
+fprintf('Condition 8: %.5f\n\n',p);
+
+% Perform all pairwise comparisons to see which conditions are statistically significantly different from one another
+% There are 8 conditions, so there are Choose(8,2) = 28 possible comparisons
+fprintf('Pairwaise comparison t-test results\n');
+for i=1:8
+	for j=(i+1):8
+		[h p] = ttest2(c(i,:), c(j,:));
+		fprintf('Condition %d vs %d: %.5f\n',i,j,p);
+	end
+end
 
 % Plot figure
 figuresize = [0 0 1.2 4.9];

@@ -17,13 +17,20 @@
 close all;
 clear all;
 
+% Open the parallel pool
 pp = parpool;
 
 
-% We assume a gaussian prior on utilities such that ~98% of the mass lies above
-% 0, i.e. mean = 2 * std
-s_u = 2;
-u_sign = 1; % Whether utilities are positive (1) or negative (-1)
+% We assume a Gaussian prior on utilities with M = 4 and SD that varies 
+% from (1/16)*M to 4*M
+priorsds = (1/16):0.2:4; % Every value in increments of 0.2
+rhos_abs = zeros(1,length(priorsds)); % Correlation coefficients for absolute utility
+rhos_rel = zeros(1,length(priorsds)); % Relative utlity
+rhos_rep = zeros(1,length(priorsds)); % Representativeness
+rhos_surp = zeros(1,length(priorsds)); % Surprise
+
+priormean = 4;
+u_sign = -1; % Whether utilities are positive (1) or negative (-1)
 
 % And we assume the selection is made using the following probabilistic rule
 %   P(i) = exp(u_i)^(1/s) / (\sum_j{exp(u_j)^(1/s)})
@@ -32,10 +39,26 @@ u_sign = 1; % Whether utilities are positive (1) or negative (-1)
 % When s -> inf, choice rule becomes random
 s = 1;
 
+if (u_sign > 0)
+	dataPos = importdata('../Data/Raw data/Positive-attributes/rawdata_fractional.csv');
+
+	% Summarize the data
+	nPos = size(dataPos,1);
+	meansPos = mean(dataPos);
+	stdsPos = std(dataPos);
+else
+	dataNeg = importdata('../Data/Raw data/Negative-attributes/rawdata_fractional.csv');
+
+	% Summarize the data
+	nNeg = size(dataNeg,1);
+	meansNeg = mean(dataNeg);
+	stdsNeg = std(dataNeg);
+end
+
 DIFFERENCE_THRESHOLD = 5e-4;
 
 % How many importance samples to draw
-nsamples = 20000000;
+nsamples = 500000;
 
 % X{i} = a [option-by-effect] matrix where each row represents x_i
 % Effects: [d c b a x]
@@ -216,73 +239,79 @@ nproblems = 47;
 
 
 n = 5; % Num of effects 5
-run_sampler = 1;
-
-    if (run_sampler == 1)
         
-        % Draw samples from the prior
-        if (u_sign > 0)
-            priorsamples = mvnrnd(zeros(1,n)+2*s_u, eye(n,n)*s_u, nsamples);
-        else
-            priorsamples = mvnrnd(zeros(1,n)-2*s_u, eye(n,n)*s_u, nsamples);
-        end
+for sdi = 1:length(priorsds)
     
-        parfor problem=1:nproblems
-            
-            fprintf('=== Problem %d ===\n', problem);
-            
-            w{problem} = zeros(1,nsamples);
-            w_max{problem} = zeros(1,nsamples);
-            
-            for i=1:nsamples
-            
-                if (mod(i,1000000) == 0)
-                    fprintf('Iteration %d\n',i);
-                end
-                
-                % Get current sample
-                y = priorsamples(i,1:n);
-                
-                % Compute w term for full model
-                w{problem}(i) = exp(y * X{problem}(end,:)').^(1/s) / sum(exp(y * X{problem}').^(1/s));
-                % Compute w term for max model
-                option_utilities = y * X{problem}';
-                if (option_utilities(end) == max(option_utilities))
-                    w_max{problem}(i) = 1;
-                else
-                    w_max{problem}(i) = 0;
-                end
-                                                     
-            end
-        end
-        
-        % Create an indicator vector such that
-        % z = 1 if x has the highest utility, else z = 0
-        z = zeros(nsamples,1);
+    sd = priorsds(sdi);
+    s_u = priormean*sd;
+
+    % Draw samples from the prior
+    if (u_sign > 0)
+        priorsamples = mvnrnd(zeros(1,n)+priormean, eye(n,n)*s_u, nsamples);
+    else
+        priorsamples = mvnrnd(zeros(1,n)-priormean, eye(n,n)*s_u, nsamples);
+    end
+
+
+    parfor problem=1:nproblems
+    
+        fprintf('=== Problem %d ===\n', problem);
+    
+        w{problem} = zeros(1,nsamples);
+        w_max{problem} = zeros(1,nsamples);
+    
         for i=1:nsamples
-            if (max(priorsamples(i,:)) == priorsamples(i,end))
-                z(i) = 1;
-            else
-                z(i) = 0;
+    
+            if (mod(i,10000) == 0)
+                fprintf('Iteration %d\n',i);
             end
-        end
         
-        % Compute expected values
-        for problem = 1:nproblems
-            % 1) E(u_x) -- logit model assuming utility-matching function
-            allmeans{problem} = w{problem} * priorsamples ./ sum(w{problem});
-            means(problem) = allmeans{problem}(end);
-            % 2) E(u_x) --  logit model assuming utility-maximizing function
-            allmeans_max{problem} = w_max{problem} * priorsamples ./ sum(w{problem});
-            means_max(problem) = allmeans_max{problem}(end);
-            % 3) Surprise
-            surprise(problem) = 1 / (sum(w{problem}) / nsamples);
-            % 4) E(Z), where Z = 1 if x has highest utility, else Z = 0
-            pHighest(problem) = w{problem} * z ./ sum(w{problem});
-        end
+            % Get current sample
+            y = priorsamples(i,1:n);
         
+            % Compute w term for full model
+            w{problem}(i) = exp(y * X{problem}(end,:)').^(1/s) / sum(exp(y * X{problem}').^(1/s));
+            
+            
+            % Compute w term for max model
+            option_utilities = y * X{problem}';
+            if (option_utilities(end) == max(option_utilities))
+                w_max{problem}(i) = 1;
+            else
+                w_max{problem}(i) = 0;
+            end
+                                             
+        end
     
     end
+        
+    % Create an indicator vector such that
+    % z = 1 if x has the highest utility, else z = 0
+    z = zeros(nsamples,1);
+    for i=1:nsamples
+        if (max(priorsamples(i,:)) == priorsamples(i,end))
+            z(i) = 1;
+        else
+            z(i) = 0;
+        end
+    end
+        
+    % Compute expected values
+    for problem = 1:nproblems
+        % 1) E(u_x) -- logit model assuming utility-matching function
+        allmeans{problem} = w{problem} * priorsamples ./ sum(w{problem});
+        means(problem) = allmeans{problem}(end);
+        % 2) E(u_x) --  logit model assuming utility-maximizing function
+        allmeans_max{problem} = w_max{problem} * priorsamples ./ sum(w{problem});
+        means_max(problem) = allmeans_max{problem}(end);
+        % 3) Surprise
+        surprise(problem) = 1 / (sum(w{problem}) / nsamples);
+        % 4) E(Z), where Z = 1 if x has highest utility, else Z = 0
+        pHighest(problem) = w{problem} * z ./ sum(w{problem});
+        % 5) E(choose X)
+        pChoose(problem) = mean(w{problem});
+    end
+        
     
     % Compute the rankings
     
@@ -345,7 +374,7 @@ run_sampler = 1;
     % 3) Surprise
     sortedRankingSurprise = zeros(1,nproblems);
     [sortedSurprise, sortingIndex] = sort(surprise);
-    
+   
     % Loop through and collect a group of items that are not significantly different
     % from one another
     currRank = 1;
@@ -368,13 +397,39 @@ run_sampler = 1;
     sortedRankingSurprise(eqClass) = fractionalRank;
     % Now "invert" the ranking vector so they are ordered by problem number
     rankingSurprise(sortingIndex) = sortedRankingSurprise;
+
+    % 4) P(choose option w/ X | X is highest)
+    sortedRankingRep = zeros(1,nproblems);
+    [sortedRep, sortingIndex] = sort(pChoose);
     
+    % Loop through and collect a group of items that are not significantly different
+    % from one another
+    currRank = 1;
+    eqClass = [1];
+    for p=2:nproblems
+        if (abs(sortedRep(p) - sortedRep(p-1)) > DIFFERENCE_THRESHOLD)
+            % Record the fractional rank of all items in the equivalence class
+            fractionalRank = sum(currRank:(currRank+length(eqClass)-1)) / length(eqClass);
+            sortedRankingRep(eqClass) = fractionalRank;
+            % Increment the current rank
+            currRank = p;
+            % Reset the eqivalence class
+            eqClass = [p];
+        else
+            eqClass = [eqClass p];
+        end
+    end
+    % Dump the remaining equivalence class
+    fractionalRank = sum(currRank:(currRank+length(eqClass)-1)) / length(eqClass);
+    sortedRankingRep(eqClass) = fractionalRank;
+    % Now "invert" the ranking vector so they are ordered by problem number
+    rankingRep(sortingIndex) = sortedRankingRep;
 
     
     % 4) P(x_u is highest)
     sortedRankingHighest = zeros(1,nproblems);
     [sortedHighest, sortingIndex] = sort(pHighest);
-    
+  
     % Loop through and collect a group of items that are not significantly different
     % from one another
     currRank = 1;
@@ -398,9 +453,43 @@ run_sampler = 1;
     % Now "invert" the ranking vector so they are ordered by problem number
     rankingHighest(sortingIndex) = sortedRankingHighest;
     
-    
-    % Save the results
- 
-%save('modelpredictions','means','means_max','surprise','labels','rankingMeans','rankingMeans_max','rankingSurprise','pHighest','rankingHighest');
 
-delete(pp);
+    % Compute Spearman rho correlation coefficients
+	if (u_sign > 0)
+		rhoAbsPos = corr(rankingMeans', meansPos', 'type', 'Spearman');
+		rhos_abs(sdi) = rhoAbsPos;
+    
+		rhoRelPos = corr(rankingHighest', meansPos', 'type', 'Spearman');
+		rhos_rel(sdi) = rhoRelPos;
+    
+		rhoRepPos = corr(rankingRep', meansPos', 'type', 'Spearman');
+		rhos_rep(sdi) = rhoRepPos;
+    
+		rhoSurprisePos = corr(rankingSurprise', meansPos', 'type', 'Spearman');
+		rhos_surp(sdi) = rhoSurprisePos;
+	else
+		rhoAbsNeg = corr(rankingMeans', meansNeg', 'type', 'Spearman');
+		rhos_abs(sdi) = rhoAbsNeg;
+    
+		rhoRelNeg = corr(rankingHighest', meansNeg', 'type', 'Spearman');
+		rhos_rel(sdi) = rhoRelNeg;
+    
+		rhoRepNeg = corr(rankingRep', meansNeg', 'type', 'Spearman');
+		rhos_rep(sdi) = rhoRepNeg;
+    
+		rhoSurpriseNeg = corr(rankingSurprise', meansNeg', 'type', 'Spearman');
+		rhos_surp(sdi) = rhoSurpriseNeg;
+	end
+	
+    
+end
+
+% Save the results
+%save('vary_prior_sd_results_500k_negative', 'priorsds', 'rhos_abs', 'rhos_rel', 'rhos_rep', 'rhos_surp');
+
+%plot(priorsds, [rhos_abs; rhos_rel; rhos_rep; rhos_surp]);
+%legend('absolute','relative','rep','surprise');
+
+% Close the parallel pool
+delete(pp); 
+

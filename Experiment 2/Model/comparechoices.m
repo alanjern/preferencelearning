@@ -17,6 +17,8 @@
 close all;
 clear all;
 
+pp = parpool;
+
 % We assume a gaussian prior on utilities such that ~98% of the mass lies above
 % 0, i.e. mean = 2 * std
 s_u = 2;
@@ -30,7 +32,7 @@ u_sign = 1; % Whether utilities are positive (1) or negative (-1)
 s = 1;
 
 % How many importance samples to draw
-nsamples = 20000000;
+nsamples = 100; %20000000;
 
 % X{i} = a [option-by-effect] matrix where each row represents x_i
 % 1) 1 chosen attribute, 2 forgone attributes
@@ -162,6 +164,4 @@ fprintf('Correlation between absolute and relative utility model predictions: %.
 		  
 %save('positive_choicefactors_20mil','predictions_absolute','labels');
 
-
-
-
+delete(pp);

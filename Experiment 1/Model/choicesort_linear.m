@@ -1,12 +1,17 @@
-% Compute "representativeness" predictions for the preference learning model
+% We assume that there is a vector of decisions d = [d_1 d_2 ... d_m]
+% d_i = {1,2,3,...,c} where c is the number of choices.
+% There are n possible effects for each decision.
 %
-% Steps
-% 1. Sample N sets of utility from prior
-% 2. Condition on u_x being highest by filtering out all other prior samples
-% 3. For each card, compute p(choose option w/ x | u) for all u's
-% 4. Compute the mean of this distribution to approximate
-% 5. Then ranking \propto E( p(choose option w/ x | u) )
-% 6. Convert to fractional rankings
+% x_i is a binary vector indicating which of the m effects follow from
+% decision d_i.
+%
+% beta is a vector of utilities assigned to each of the effects, where
+% we assume that the utility for a decision d_i is the sum of the
+% utilities of its effects.
+%
+% Therefore, P(beta | d,X) \propto P(d | beta,X) * P(beta | X)
+%                          \propto P(d | beta,X) * P(beta)
+%
 %
 
 close all;
@@ -14,23 +19,17 @@ clear all;
 
 pp = parpool;
 
-
-%
 % We assume a gaussian prior on utilities such that ~98% of the mass lies above
 % 0, i.e. mean = 2 * std
-s_u = 2; 
-u_sign = 1; % Whether utilities are positive (1) or negative (-1)
+s_u = 2;
+u_sign = -1; % Whether utilities are positive (1) or negative (-1)
 
-% And we assume the selection is made using the following probabilistic rule
-%   P(i) = exp(u_i)^(1/s) / (\sum_j{exp(u_j)^(1/s)})
-% When s -> 0, choice rule becomes maximum utility
-% When s -> 1, choice rule becomes utility matching (probabilistic selection)
-% When s -> inf, choice rule becomes random
-s = 1;
 
 DIFFERENCE_THRESHOLD = 5e-4;
 
+% How many importance samples to draw
 nsamples = 20000000;
+
 
 % X{i} = a [option-by-effect] matrix where each row represents x_i
 % Effects: [d c b a x]
@@ -206,101 +205,108 @@ X{47} = [1 0 1 1 0;
 labels{47} = 'bad/bac/bax';
 
 nproblems = 47;
-n = 5; % Num of effects 5
-run_sampler = 1;
 
-    if (run_sampler == 1)
+
+
+
+n = 5; % Num of effects 5
         
-        % Draw samples from the prior
-        if (u_sign > 0)
-            priorsamples = mvnrnd(zeros(1,n)+2*s_u, eye(n,n)*s_u, nsamples);
-        else
-            priorsamples = mvnrnd(zeros(1,n)-2*s_u, eye(n,n)*s_u, nsamples);
-        end
-        
-        % Filter out samples where x isn't highest
-        n_filtered_samples = 0;
-        for i=1:nsamples
-            if (mod(i,1000000) == 0)
-                fprintf('Pre-scan sample %d\n',i);
-            end
-            if (max(priorsamples(i,:)) == priorsamples(i,5))
-                n_filtered_samples = n_filtered_samples+1;
-            end
-        end
-        filteredsamples = zeros(n_filtered_samples,5);
-        for i=1:nsamples
-            if (mod(i,1000000) == 0)
-                fprintf('Filter sample %d\n',i);
-            end
-            if (max(priorsamples(i,:)) == priorsamples(i,5))
-                filteredsamples(n_filtered_samples,:) = priorsamples(i,:);
-            end
-        end
+% Draw samples from the prior
+if (u_sign > 0)
+    priorsamples = mvnrnd(zeros(1,n)+2*s_u, eye(n,n)*s_u, nsamples);
+else
+    priorsamples = mvnrnd(zeros(1,n)-2*s_u, eye(n,n)*s_u, nsamples);
+end
+
+parfor problem=1:nproblems
     
-        parfor problem=1:nproblems
-            
-            fprintf('=== Problem %d ===\n', problem);
-            
-            likelihoods{problem} = zeros(1,n_filtered_samples);
-            
-            for i=1:n_filtered_samples
-            
-                if (mod(i,1000000) == 0)
-                    fprintf('Iteration %d\n',i);
-                end
-                
-                % Get current sample
-                y = filteredsamples(i,1:n);
-                
-                % Compute likelihood
-                likelihoods{problem}(i) = exp(y * X{problem}(end,:)').^(1/s) / sum(exp(y * X{problem}').^(1/s));
-                                                     
-            end
-        end
-        
-        % Compute expected values
-        for problem = 1:nproblems
-            % E(choose X)
-            pChoose(problem) = mean(likelihoods{problem});
-        end
-        
+    fprintf('=== Problem %d ===\n', problem);
     
+    ll_linear{problem} = zeros(1,nsamples);
+    
+    for i=1:nsamples
+    
+        if (mod(i,1000000) == 0)
+            fprintf('Iteration %d\n',i);
+        end
+        
+        % Get current sample
+        y = priorsamples(i,1:n);
+        
+        % Compute likelihood term
+        ll_linear{problem}(i) = (y * X{problem}(end,:)') / sum(y * X{problem}');
+
     end
+end
+
+
+% Compute expected values
+for problem = 1:nproblems
+    allmeans_linear{problem} = ll_linear{problem} * priorsamples ./ sum(ll_linear{problem});
+    means_linear(problem) = allmeans_linear{problem}(end);
+end
+
+
     
-    % Compute the rankings
-    
-    % 4) P(choose option w/ X | X is highest)
-    sortedRankingRep = zeros(1,nproblems);
-    [sortedRep, sortingIndex] = sort(pChoose);
-    
-    % Loop through and collect a group of items that are not significantly different
-    % from one another
-    currRank = 1;
-    eqClass = [1];
-    for p=2:nproblems
-        if (abs(sortedRep(p) - sortedRep(p-1)) > DIFFERENCE_THRESHOLD)
-            % Record the fractional rank of all items in the equivalence class
-            fractionalRank = sum(currRank:(currRank+length(eqClass)-1)) / length(eqClass);
-            sortedRankingRep(eqClass) = fractionalRank;
-            % Increment the current rank
-            currRank = p;
-            % Reset the eqivalence class
-            eqClass = [p];
-        else
-            eqClass = [eqClass p];
-        end
+% Compute the rankings
+
+%% Linear
+sortedRankingMeans = zeros(1,nproblems);
+[sortedMeans, sortingIndex] = sort(means_linear);
+
+% Loop through and collect a group of items that are not significantly different
+% from one another
+currRank = 1;
+eqClass = [1];
+for p=2:nproblems
+    if (abs(sortedMeans(p) - sortedMeans(p-1)) > DIFFERENCE_THRESHOLD)
+        % Record the fractional rank of all items in the equivalence class
+        fractionalRank = sum(currRank:(currRank+length(eqClass)-1)) / length(eqClass);
+        sortedRankingMeans(eqClass) = fractionalRank;
+        % Increment the current rank
+        currRank = p;
+        % Reset the eqivalence class
+        eqClass = [p];
+    else
+        eqClass = [eqClass p];
     end
-    % Dump the remaining equivalence class
-    fractionalRank = sum(currRank:(currRank+length(eqClass)-1)) / length(eqClass);
-    sortedRankingRep(eqClass) = fractionalRank;
-    % Now "invert" the ranking vector so they are ordered by problem number
-    rankingRep(sortingIndex) = sortedRankingRep;
-    
-    
-    % Save the results
-    %save('representativenessmodelpredictions','pChoose','labels','rankingRep');
+end
+% Dump the remaining equivalence class
+fractionalRank = sum(currRank:(currRank+length(eqClass)-1)) / length(eqClass);
+sortedRankingMeans(eqClass) = fractionalRank;
+% Now "invert" the ranking vector so they are ordered by problem number
+rankingMeans_linear(sortingIndex) = sortedRankingMeans;
+
+
+% Save the results
+ 
+%save('negative_choicesort_linear_20mil','rankingMeans_linear','labels');
+
+
+% Load in the data
+if (u_sign > 0)
+	dataPos = importdata('../Data/Raw data/Positive-attributes/rawdata_fractional.csv');
+
+	% Summarize the data
+	nPos = size(dataPos,1);
+	meansPos = mean(dataPos);
+	stdsPos = std(dataPos);
+	
+	% Compute Spearman rho correlation coefficients
+	rhoAbsPos_linear = corr(rankingMeans_linear', meansPos', 'type', 'Spearman');
+	fprintf('linear rho = %f\n',rhoAbsPos_linear);
+else
+	dataNeg = importdata('../Data/Raw data/Negative-attributes/rawdata_fractional.csv');
+
+	% Summarize the data
+	nNeg = size(dataNeg,1);
+	meansNeg = mean(dataNeg);
+	stdsNeg = std(dataNeg);
+	
+	% Compute Spearman rho correlation coefficients
+	rhoAbsNeg_linear = corr(rankingMeans_linear', meansNeg', 'type', 'Spearman');
+	fprintf('linear rho = %f\n',rhoAbsNeg_linear);
+end
+
 
 delete(pp);
-
-
