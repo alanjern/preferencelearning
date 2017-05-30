@@ -3,7 +3,7 @@
 % Steps
 % 1. Sample N sets of utility from prior
 % 2. Condition on u_x being highest by filtering out all other prior samples
-% 3. For each card, compute p(choose option w/ x | u) for all u's
+% 3. For each choice, compute p(choose option w/ x | u) for all u's
 % 4. Compute the mean of this distribution to approximate
 % 5. Then ranking \propto E( p(choose option w/ x | u) )
 % 6. Convert to fractional rankings
@@ -219,22 +219,24 @@ run_sampler = 1;
         end
         
         % Filter out samples where x isn't highest
-        n_filtered_samples = 0;
+        nFilteredSamples = 0;
         for i=1:nsamples
             if (mod(i,1000000) == 0)
                 fprintf('Pre-scan sample %d\n',i);
             end
             if (max(priorsamples(i,:)) == priorsamples(i,5))
-                n_filtered_samples = n_filtered_samples+1;
+                nFilteredSamples = nFilteredSamples+1;
             end
         end
-        filteredsamples = zeros(n_filtered_samples,5);
+        filteredsamples = zeros(nFilteredSamples,5);
+		sampleIndex = 1;
         for i=1:nsamples
             if (mod(i,1000000) == 0)
                 fprintf('Filter sample %d\n',i);
             end
             if (max(priorsamples(i,:)) == priorsamples(i,5))
-                filteredsamples(n_filtered_samples,:) = priorsamples(i,:);
+                filteredsamples(sampleIndex,:) = priorsamples(i,:);
+				sampleIndex = sampleIndex+1;
             end
         end
     
@@ -242,9 +244,9 @@ run_sampler = 1;
             
             fprintf('=== Problem %d ===\n', problem);
             
-            likelihoods{problem} = zeros(1,n_filtered_samples);
+            likelihoods{problem} = zeros(1,nFilteredSamples);
             
-            for i=1:n_filtered_samples
+            for i=1:nFilteredSamples
             
                 if (mod(i,1000000) == 0)
                     fprintf('Iteration %d\n',i);
