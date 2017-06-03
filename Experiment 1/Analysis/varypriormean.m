@@ -20,19 +20,22 @@ clear all;
 % Open the parallel pool
 pp = parpool;
 
+% How many importance samples to draw
+nsamples = 500000;
+
+s_u = 2; % sigma
+u_sign = -1; % Whether utilities are positive (1) or negative (-1)
+
+% The minimum difference in model predictions that produces a different ranking
+DIFFERENCE_THRESHOLD = 5e-4; 
 
 % We assume a Gaussian prior on utilities with SD = 2 and a mean that varies 
 % with respect to SD from (1/8)*SD to 8*SD
-priormeans = (1/8):0.2:8; % Every value in increments of 0.2
+priormeans = ((1/4):0.25:12)*s_u; % Every value in increments of 0.25
 rhos_abs = zeros(1,length(priormeans)); % Correlation coefficients for absolute utility
 rhos_rel = zeros(1,length(priormeans)); % Relative utlity
 rhos_rep = zeros(1,length(priormeans)); % Representativeness
 rhos_surp = zeros(1,length(priormeans)); % Surprise
-
-% We assume a gaussian prior on utilities such that ~98% of the mass lies above
-% 0, i.e. mean = 2 * std
-s_u = 2;
-u_sign = -1; % Whether utilities are positive (1) or negative (-1)
 
 % And we assume the selection is made using the following probabilistic rule
 %   P(i) = exp(u_i)^(1/s) / (\sum_j{exp(u_j)^(1/s)})
@@ -59,11 +62,6 @@ else
 	stdsNeg = std(dataNeg);
 end
 
-
-DIFFERENCE_THRESHOLD = 5e-4;
-
-% How many importance samples to draw
-nsamples = 500000;
 
 % X{i} = a [option-by-effect] matrix where each row represents x_i
 % Effects: [d c b a x]
@@ -313,8 +311,8 @@ for mi = 1:length(priormeans)
         surprise(problem) = 1 / (sum(w{problem}) / nsamples);
         % 4) E(Z), where Z = 1 if x has highest utility, else Z = 0
         pHighest(problem) = w{problem} * z ./ sum(w{problem});
-        % 5) E(choose X)
-        pChoose(problem) = mean(w{problem});
+        % 5) E(choose X | X is highest)
+        pChoose(problem) = mean(w{problem}(find(z)));
     end
         
     
@@ -490,7 +488,7 @@ for mi = 1:length(priormeans)
 end
 
 % Save the results
-%save('vary_prior_mean_results_500k_negative', 'priormeans', 'rhos_abs', 'rhos_rel', 'rhos_rep', 'rhos_surp');
+%save('vary_prior_mean_results', 'priormeans', 'rhos_abs', 'rhos_rel', 'rhos_rep', 'rhos_surp');
 
 %plot(priormeans, [rhos_abs; rhos_rel; rhos_rep; rhos_surp]);
 %legend('absolute','relative','rep','surprise');

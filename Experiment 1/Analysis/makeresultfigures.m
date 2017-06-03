@@ -29,7 +29,7 @@ modelLinearPos = load('../Model/positive_choicesort_linear_20mil');
 dataNeg = importdata('../Data/Raw data/Negative-attributes/rawdata_fractional.csv');
 labelsNeg = importdata('../Data/Summary data/Positive-attributes/labels_fractional.csv');
 modelNeg = load('../Model/negative_choicesort_20mil');
-modelRepNeg = load('../Model/positive_choicesort_representativeness_20mil');
+modelRepNeg = load('../Model/negative_choicesort_representativeness_20mil');
 modelProbitNeg = load('../Model/negative_choicesort_probit_200k');
 
 
@@ -72,7 +72,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/absolute_vs_human_positive');
+%print('-depsc', 'absolute_vs_human_positive');
 
 % Compute Spearman rho
 rhoAbsPos = corr(modelPos.rankingMeans', meansPos', 'type', 'Spearman');
@@ -125,7 +125,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/absolute_vs_human_negative');
+%print('-depsc', 'absolute_vs_human_negative');
 
 % Compute Spearman rho
 rhoAbsNeg = corr(modelNeg.rankingMeans', meansNeg', 'type', 'Spearman');
@@ -177,7 +177,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/relative_vs_human_positive_small');
+%print('-depsc', 'relative_vs_human_positive_small');
 
 % Compute Spearman rho
 rhoRelPos = corr(modelPos.rankingHighest', meansPos', 'type', 'Spearman');
@@ -206,7 +206,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/relative_vs_human_negative_small');
+%print('-depsc', 'relative_vs_human_negative_small');
 
 % Compute Spearman rho
 rhoRelNeg = corr(modelNeg.rankingHighest', meansNeg', 'type', 'Spearman');
@@ -234,7 +234,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/representativeness_vs_human_positive_small');
+%print('-depsc', 'representativeness_vs_human_positive_small');
 
 % Compute Spearman rho
 rhoRepPos = corr(modelRepPos.rankingRep', meansPos', 'type', 'Spearman');
@@ -262,7 +262,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/representativeness_vs_human_negative_small');
+%print('-depsc', 'representativeness_vs_human_negative_small');
 
 % Compute Spearman rho
 rhoRepNeg = corr(modelRepNeg.rankingRep', meansNeg', 'type', 'Spearman');
@@ -290,7 +290,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/surprise_vs_human_positive_small');
+%print('-depsc', 'surprise_vs_human_positive_small');
 
 % Compute Spearman rho
 rhoSurprisePos = corr(modelPos.rankingSurprise', meansPos', 'type', 'Spearman');
@@ -317,7 +317,7 @@ set(gca,'YTickLabel',{});
 box off;
 hold off;
 
-%print('-depsc', 'Figures/surprise_vs_human_negative_small');
+%print('-depsc', 'surprise_vs_human_negative_small');
 
 % Compute Spearman rho
 rhoSurpriseNeg = corr(modelNeg.rankingSurprise', meansNeg', 'type', 'Spearman');
@@ -384,7 +384,7 @@ for c=1:nClusters
     set(gca,'YTickLabel',{});
     box off;
     hold off;
-%    fname = sprintf('Figures/cluster%d_absolute',c);
+%    fname = sprintf('cluster%d_absolute',c);
 %    print('-depsc', fname);
     
     figure();
@@ -474,8 +474,8 @@ set(gcf, 'PaperPosition', [0 0 2.5 2]);
 %                varyMeansPos.rhos_rep; varyMeansPos.rhos_surp], 'markersize', 4);
 plot(varyMeansPos.priormeans, [varyMeansPos.rhos_abs; varyMeansPos.rhos_rel; ...
                 varyMeansPos.rhos_rep; varyMeansPos.rhos_surp], '.', 'markersize', 8);
-axis([0 8.1 -1 1.1]);
-set(gca,'XTick',[4 8]);
+axis([0 24.1 -1 1.1]);
+set(gca,'XTick',[10 20 24]);
 set(gca,'YTick',[0 1]);
 set(gca,'XTickLabel',{});
 set(gca,'YTickLabel',{});
@@ -489,14 +489,14 @@ set(gcf, 'PaperPosition', [0 0 2.5 2]);
 
 plot(varyMeansNeg.priormeans, [varyMeansNeg.rhos_abs; varyMeansNeg.rhos_rel; ...
                 varyMeansNeg.rhos_rep; varyMeansNeg.rhos_surp], '.', 'markersize', 8);
-axis([0 8.1 -1 1.1]);
-set(gca,'XTick',[4 8]);
+axis([0 24.1 -1 1.1]);
+set(gca,'XTick',[10 20 24]);
 set(gca,'YTick',[0 1]);
 set(gca,'XTickLabel',{});
 set(gca,'YTickLabel',{});
 box off;
 
-print('-depsc', 'param_sensitivity_mu_neg');
+%print('-depsc', 'param_sensitivity_mu_neg');
 
 figure();
 set(gcf, 'PaperUnits', 'inches');
@@ -504,8 +504,8 @@ set(gcf, 'PaperPosition', [0 0 2.5 2]);
 
 plot(varySDsPos.priorsds, [varySDsPos.rhos_abs; varySDsPos.rhos_rel; ...
                 varySDsPos.rhos_rep; varySDsPos.rhos_surp], '.', 'markersize', 8);
-axis([0 4.1 -1 1.1]);
-set(gca,'XTick',[2 4]);
+axis([0 15.5 -1 1.1]);
+set(gca,'XTick',[5 10 15]);
 set(gca,'YTick',[0 1]);
 set(gca,'XTickLabel',{});
 set(gca,'YTickLabel',{});
@@ -519,8 +519,8 @@ set(gcf, 'PaperPosition', [0 0 2.5 2]);
 
 plot(varySDsNeg.priorsds, [varySDsNeg.rhos_abs; varySDsNeg.rhos_rel; ...
                 varySDsNeg.rhos_rep; varySDsNeg.rhos_surp], '.', 'markersize', 8);
-axis([0 4.1 -1 1.1]);
-set(gca,'XTick',[2 4]);
+axis([0 15.5 -1 1.1]);
+set(gca,'XTick',[5 10 15]);
 set(gca,'YTick',[0 1]);
 set(gca,'XTickLabel',{});
 set(gca,'YTickLabel',{});

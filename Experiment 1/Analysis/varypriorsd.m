@@ -20,17 +20,22 @@ clear all;
 % Open the parallel pool
 pp = parpool;
 
+% How many importance samples to draw
+nsamples = 500000;
+
+% The minimum difference in model predictions that produces a different ranking
+DIFFERENCE_THRESHOLD = 5e-4; 
+
+priormean = 4;
+u_sign = -1; % Whether utilities are positive (1) or negative (-1)
 
 % We assume a Gaussian prior on utilities with M = 4 and SD that varies 
 % from (1/16)*M to 4*M
-priorsds = (1/16):0.2:4; % Every value in increments of 0.2
+priorsds = ((1/16):0.25:4)*priormean; % Every value in increments of 0.25
 rhos_abs = zeros(1,length(priorsds)); % Correlation coefficients for absolute utility
 rhos_rel = zeros(1,length(priorsds)); % Relative utlity
 rhos_rep = zeros(1,length(priorsds)); % Representativeness
 rhos_surp = zeros(1,length(priorsds)); % Surprise
-
-priormean = 4;
-u_sign = -1; % Whether utilities are positive (1) or negative (-1)
 
 % And we assume the selection is made using the following probabilistic rule
 %   P(i) = exp(u_i)^(1/s) / (\sum_j{exp(u_j)^(1/s)})
@@ -54,11 +59,6 @@ else
 	meansNeg = mean(dataNeg);
 	stdsNeg = std(dataNeg);
 end
-
-DIFFERENCE_THRESHOLD = 5e-4;
-
-% How many importance samples to draw
-nsamples = 500000;
 
 % X{i} = a [option-by-effect] matrix where each row represents x_i
 % Effects: [d c b a x]
@@ -242,8 +242,7 @@ n = 5; % Num of effects 5
         
 for sdi = 1:length(priorsds)
     
-    sd = priorsds(sdi);
-    s_u = priormean*sd;
+    s_u = priorsds(sdi);
 
     % Draw samples from the prior
     if (u_sign > 0)
@@ -308,8 +307,8 @@ for sdi = 1:length(priorsds)
         surprise(problem) = 1 / (sum(w{problem}) / nsamples);
         % 4) E(Z), where Z = 1 if x has highest utility, else Z = 0
         pHighest(problem) = w{problem} * z ./ sum(w{problem});
-        % 5) E(choose X)
-        pChoose(problem) = mean(w{problem});
+        % 5) E(choose X | X is highest)
+        pChoose(problem) = mean(w{problem}(find(z)));
     end
         
     
@@ -485,7 +484,7 @@ for sdi = 1:length(priorsds)
 end
 
 % Save the results
-%save('vary_prior_sd_results_500k_negative', 'priorsds', 'rhos_abs', 'rhos_rel', 'rhos_rep', 'rhos_surp');
+%save('vary_prior_sd_results', 'priorsds', 'rhos_abs', 'rhos_rel', 'rhos_rep', 'rhos_surp');
 
 %plot(priorsds, [rhos_abs; rhos_rel; rhos_rep; rhos_surp]);
 %legend('absolute','relative','rep','surprise');
