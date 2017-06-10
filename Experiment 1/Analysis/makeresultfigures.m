@@ -35,7 +35,7 @@ modelProbitNeg = load('../Model/negative_choicesort_probit_200k');
 
 % Summarize the data
 
-% Positive effects
+% Positive attributes
 nPos = size(dataPos,1);
 meansPos = mean(dataPos);
 stdsPos = std(dataPos);
@@ -43,7 +43,7 @@ sesPos = stdsPos ./ sqrt(nPos);
 [sortedDataPos, sortingIndexDataPos] = sort(meansPos);
 sortedStdsPos = stdsPos(sortingIndexDataPos);
 
-% Negative effects
+% Negative attributes
 nNeg = size(dataNeg,1);
 meansNeg = mean(dataNeg);
 stdsNeg = std(dataNeg);
@@ -529,3 +529,42 @@ box off;
 %print('-depsc', 'param_sensitivity_sigma_neg');
 
 
+% =============================================================================
+% Residual regression analysis
+% =============================================================================
+
+% Positive attributes
+residualsPos = meansPos - modelPos.rankingMeans;
+
+figure();
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperPosition', [0 0 2.5 2]);
+plot([0 48], [0 0], ':', 'Color', [0.5 0.5 0.5]);
+hold on;
+plot(modelPos.rankingMeans, residualsPos, 'k.', 'markersize', 8);
+axis([0 48 -20 10])
+set(gca,'XTick', [1 47]);
+set(gca,'YTick', [-20 -10 0 10]);
+set(gca,'XTickLabel',{});
+set(gca,'YTickLabel',{});
+box off;
+
+%print('-depsc', 'residual_plot_pos');
+
+% Negative attributes
+residualsNeg = meansNeg - modelNeg.rankingMeans;
+
+figure();
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperPosition', [0 0 2.5 2]);
+plot([0 48], [0 0], ':', 'Color', [0.5 0.5 0.5]);
+hold on;
+plot(modelNeg.rankingMeans, residualsNeg, 'k.', 'markersize', 8);
+axis([0 48 -20 10])
+set(gca,'XTick', [1 47]);
+set(gca,'YTick', [-20 -10 0 10]);
+set(gca,'XTickLabel',{});
+set(gca,'YTickLabel',{});
+box off;
+
+%print('-depsc', 'residual_plot_neg');

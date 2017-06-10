@@ -1,5 +1,5 @@
-% Perform a hierarchical clustering analysis on the data from the
-% negative-attributes condition and plot the resulting dendrogram
+% Perform a hierarchical clustering analysis on the data and 
+% plot the resulting dendrogram
 
 close all;
 clear all;

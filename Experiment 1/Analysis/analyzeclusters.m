@@ -1,6 +1,6 @@
 % Compute the average ranking for each cluster and compare
-% it to the predictions of both versions of the logit model (absolute and
-% relative)
+% it to the predictions of both versions of the inverse decision making
+% model (absolute and relative)
 
 close all;
 clear all;

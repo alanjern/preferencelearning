@@ -1,0 +1,1 @@
+_Note_: These files include many references to the representativeness and surprise models. These names were used in previous versions of the paper. The representativeness model is equivalent to the likelihood model in the paper. The surprise model is equivalent to the marginal likelihood model in the paper.

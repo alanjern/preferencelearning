@@ -22,13 +22,13 @@ pp = parpool;
 % We assume a gaussian prior on utilities such that ~98% of the mass lies above
 % 0, i.e. mean = 2 * std
 s_u = 2;
-u_sign = -1; % Whether utilities are positive (1) or negative (-1)
+u_sign = 1; % Whether utilities are positive (1) or negative (-1)
 
 
 DIFFERENCE_THRESHOLD = 5e-4;
 
 % How many importance samples to draw
-nsamples = 20000000;
+nsamples =  20000000;
 
 
 % X{i} = a [option-by-effect] matrix where each row represents x_i
@@ -234,7 +234,20 @@ parfor problem=1:nproblems
         y = priorsamples(i,1:n);
         
         % Compute likelihood term
-        ll_linear{problem}(i) = (y * X{problem}(end,:)') / sum(y * X{problem}');
+        if (u_sign > 0)
+			ll_linear{problem}(i) = (y * X{problem}(end,:)') / sum(y * X{problem}');
+		else
+			problemSize = size(X{problem});
+			% If there is only one option in the problem
+			if (problemSize(1) == 1)
+				% Then choice probability must be 1
+				ll_linear{problem}(i) = 1;
+			else
+				y = abs(y);
+				ll_linear{problem}(i) = 1 - (y * X{problem}(end,:)') / sum(y * X{problem}');
+			end
+		end
+		%ll_linear{problem}(i) = (y * X{problem}(end,:)') / sum(y * X{problem}');
 
     end
 end
@@ -242,7 +255,7 @@ end
 
 % Compute expected values
 for problem = 1:nproblems
-    allmeans_linear{problem} = ll_linear{problem} * priorsamples ./ sum(ll_linear{problem});
+	allmeans_linear{problem} = ll_linear{problem} * priorsamples ./ sum(ll_linear{problem});
     means_linear(problem) = allmeans_linear{problem}(end);
 end
 
@@ -280,7 +293,7 @@ rankingMeans_linear(sortingIndex) = sortedRankingMeans;
 
 % Save the results
  
-%save('negative_choicesort_linear_20mil','rankingMeans_linear','labels');
+%save('choicesort_linear_20mil','rankingMeans_linear','labels');
 
 
 % Load in the data

@@ -2,7 +2,7 @@
 
 clear all;
 
-% Load in the data
+% Load in the data and model predictions
 
 % Positive effects
 dataPos = importdata('../Data/Raw data/Positive-attributes/rawdata_fractional.csv');
@@ -18,8 +18,11 @@ modelNeg = load('../Model/negative_choicesort_20mil');
 
 % Positive effects
 meansPos = mean(dataPos);
+residualsPos = meansPos - modelPos.rankingMeans;
+
 % Negative effects
 meansNeg = mean(dataNeg);
+residualsNeg = meansNeg - modelNeg.rankingMeans;
 
 % Predictor
 % 1. Number of chosen effects
@@ -175,7 +178,7 @@ fprintf('Weighted feature rank correlation: %.3f\n\n', max_rho);
 % Analysis 2: Evaluate performance of weighted feature model
 %      using a hold-out sample
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-m = 500; % number of times to run the analysis
+m = 5; %500; % number of times to run the analysis
 valSize = 5; % size of validation set
 testSize = 5; % size of the test set
 
@@ -319,3 +322,19 @@ fprintf('Lasso model rank correlation: M=%.3f (SD=%.3f)\n', ...
 fprintf('IDM model rank correlation: M=%.3f (SD=%.3f)\n', ...
 	mean(idmRhosNeg), std(idmRhosNeg));
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Analysis 3: Perform linear regression on the residuals of the
+%      IDM's residuals. Statistically significant predictors
+%      suggest the IDM is failing to account for additional 
+%      features that explain variance in subjects' mean rankings
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+fprintf('\n\n=== Regression on residuals ===\n\n');
+
+fprintf('Positive attributes\n');
+mPos = fitlm(X,residualsPos');
+disp(mPos);
+
+fprintf('\n\nNegative attributes\n');
+mNeg = fitlm(X,residualsNeg');
+disp(mNeg);
