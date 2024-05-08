@@ -19,14 +19,14 @@ ax/cb
 ax/bx/cx/ad
 x/dcba
 x/cba
-x/ba/dc
+x/ba
 ax/bx/ac
 bax/bac
 bax/dc
-cbad/cbax
 cbax/cbad
+x/dc/ba
 ax/ab
-bax/bac/bad
+bax/c
 cbax/d
 ax/bx/ac/ad
 ax/ab/dc
@@ -40,7 +40,7 @@ ax/b/c
 bax/bac/bad
 ax/ab/ac
 x/a/b/dc
-x/a/dcb
+x/b/a
 ax/ab/ac/ad
 ax/b/c/d
 x/a/b/c
